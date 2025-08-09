@@ -1,11 +1,12 @@
 import React from 'react'
-import HomePage from '../Pages/Homepage.jsx'
+import Homepage from '../Pages/Homepage.jsx'
 import ChatInterface from '../Components/ChatInterface.jsx'
+import "./App.css"
 
 
 function App() {
   return (
-    <div><ChatInterface /></div>
+    <div><Homepage /></div>
   )
 }
 
