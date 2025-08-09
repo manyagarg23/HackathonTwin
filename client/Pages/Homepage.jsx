@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import ChatInterface from '../Components/ChatInterface.jsx'
+import HeroSection from '../Components/ui/HeroSection.jsx';
 
 function Homepage() {
   const [showChat, setShowChat] = useState(false);
@@ -35,16 +36,18 @@ function Homepage() {
   }
 
   // This will be shown when showChat is false
-  return (
-    <div className="min-h-screen bg-background p-6 flex items-center justify-center">
-      <button
-        onClick={handleGetStarted}
-        className="bg-primary text-primary-foreground px-6 py-3 rounded-lg shadow-lg hover:shadow-xl"
-      >
-        Get Started
-      </button>
-    </div>
-  );
+  // return (
+  //   <div className="min-h-screen bg-background p-6 flex items-center justify-center">
+  //     <button
+  //       onClick={handleGetStarted}
+  //       className="bg-primary text-primary-foreground px-6 py-3 rounded-lg shadow-lg hover:shadow-xl"
+  //     >
+  //       Get Started
+  //     </button>
+  //   </div>
+  // );
+
+  return <HeroSection onGetStarted={handleGetStarted} />;
 
 }
 export default Homepage;
