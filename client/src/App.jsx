@@ -1,6 +1,5 @@
 import React from 'react'
 import Homepage from '../Pages/Homepage.jsx'
-import ChatInterface from '../Components/ChatInterface.jsx'
 import "./App.css"
 
 

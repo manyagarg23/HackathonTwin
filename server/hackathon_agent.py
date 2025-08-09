@@ -11,7 +11,6 @@ from langchain_core.output_parsers import StrOutputParser
 # Load environment variables
 load_dotenv()
 
-
 class HackathonChatAgent:
     """Simple chat agent for hackathon information collection."""
     
