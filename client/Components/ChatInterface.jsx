@@ -1,37 +1,89 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Send, Bot, User } from 'lucide-react';
 
 const ChatInterface = () => {
-  const [messages, setMessages] = useState([
-    {
-      id: '1',
-      text: "Hello! I'm your hackathon portal agent. I'll help you create a custom hackathon portal by gathering some details. Let's start with the basics - what's the name of your hackathon?",
-      sender: 'agent',
-    }
-  ]);
+  const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [sessionId, setSessionId] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const getAgentResponse = (userMessage, messageCount) => {
-    const responses = [
-      `Great! "${userMessage}" sounds like an exciting hackathon. Now, when will it take place?`,
-      `Perfect timing! And where will it be held?`,
-      `Excellent location choice! What's the main theme or focus area for this hackathon?`,
-      `That theme sounds fascinating! How many participants are you expecting?`,
-      `Great scale! What prizes or rewards will you be offering to participants?`,
-      `Impressive prizes! Are there any specific technologies or requirements participants should know about?`,
-      `Perfect! I have all the information I need. Based on your inputs, I'll now generate a custom hackathon portal.`,
-    ];
-    return responses[Math.min(messageCount - 2, responses.length - 1)] ||
-      "Thanks for that information! What else can you tell me about your hackathon?";
+  const API_BASE_URL = 'http://localhost:8000/api';
+
+  // Initialize chat session on component mount
+  useEffect(() => {
+    initializeChat();
+  }, []);
+
+  const initializeChat = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/chat/new`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to initialize chat');
+      }
+      
+      const data = await response.json();
+      setSessionId(data.session_id);
+      
+      // Add the welcome message to the chat
+      setMessages([{
+        id: '1',
+        text: data.response,
+        sender: 'agent',
+      }]);
+      
+    } catch (error) {
+      console.error('Error initializing chat:', error);
+      // Fallback message if API is not available
+      setMessages([{
+        id: '1',
+        text: "Hello! I'm your hackathon setup assistant. I'll help you gather all the important details to create an amazing hackathon. Let's start with the basics - what's the name of your hackathon?",
+        sender: 'agent',
+      }]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleSendMessage = () => {
-    if (!inputValue.trim()) return;
+  const sendMessageToAPI = async (message) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/chat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: message,
+          session_id: sessionId,
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to send message');
+      }
+      
+      const data = await response.json();
+      return data.response;
+      
+    } catch (error) {
+      console.error('Error sending message:', error);
+      return "I'm sorry, I'm having trouble connecting right now. Please try again.";
+    }
+  };
 
+  const handleSendMessage = async () => {
+    if (!inputValue.trim() || isTyping) return;
+
+    const messageText = inputValue;
     const userMessage = {
       id: Date.now().toString(),
-      text: inputValue,
+      text: messageText,
       sender: 'user',
     };
 
@@ -39,15 +91,17 @@ const ChatInterface = () => {
     setInputValue('');
     setIsTyping(true);
 
-    setTimeout(() => {
-      const agentResponse = {
-        id: (Date.now() + 1).toString(),
-        text: getAgentResponse(inputValue, messages.length),
-        sender: 'agent',
-      };
-      setMessages(prev => [...prev, agentResponse]);
-      setIsTyping(false);
-    }, 1000 + Math.random() * 1000);
+    // Get response from API
+    const agentResponseText = await sendMessageToAPI(messageText);
+    
+    const agentResponse = {
+      id: (Date.now() + 1).toString(),
+      text: agentResponseText,
+      sender: 'agent',
+    };
+    
+    setMessages(prev => [...prev, agentResponse]);
+    setIsTyping(false);
   };
 
   const handleKeyPress = (e) => {
@@ -55,6 +109,19 @@ const ChatInterface = () => {
       handleSendMessage();
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="p-6 text-black bg-white border border-gray-300 rounded">
+        <div className="h-96 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black mx-auto mb-2"></div>
+            <p>Initializing chat...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 text-black bg-white border border-gray-300 rounded">

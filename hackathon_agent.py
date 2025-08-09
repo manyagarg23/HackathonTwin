@@ -24,7 +24,8 @@ class HackathonChatAgent:
         self.llm = ChatGoogleGenerativeAI(
             model="gemini-2.5-pro",
             google_api_key=api_key,
-            temperature=0.7
+            temperature=0.7,
+            convert_system_message_to_human=True
         )
         
         # Create prompt template
@@ -101,7 +102,16 @@ Remember: You're helping them plan an amazing hackathon! Be supportive and excit
     
     def get_welcome_message(self) -> str:
         """Get initial welcome message."""
-        return self.chat("Hi there! I'm ready to help you set up your hackathon.")
+        # Return a consistent welcome message without adding to conversation history yet
+        welcome = "Hello! I'm your hackathon setup assistant. I'll help you gather all the important details to create an amazing hackathon. Let's start with the basics - what's the name of your hackathon?"
+        
+        # Add to conversation history
+        self.conversation_history.append({
+            "user": "Hi there! I'm ready to help you set up your hackathon.",
+            "agent": welcome
+        })
+        
+        return welcome
     
     def get_hackathon_summary(self) -> str:
         """Generate a summary of collected hackathon details."""
