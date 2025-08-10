@@ -4,6 +4,7 @@ FastAPI server for the Hackathon Chat Agent.
 
 import uuid
 from typing import Dict
+import os
 from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -170,6 +171,44 @@ async def configure_smtp(config: SMTPConfigRequest):
             success=False,
             error=f"Failed to configure SMTP: {str(e)}"
         )
+
+
+@app.post("/api/add_logistics")
+async def add_logistics(file: UploadFile = File(...)):
+    """Upload a logistics document (PDF or text)."""
+    try:
+        # Define the upload directory
+        upload_dir = "helper/data"
+        os.makedirs(upload_dir, exist_ok=True)
+
+        # Save the uploaded file
+        file_path = os.path.join(upload_dir, file.filename)
+        with open(file_path, "wb") as buffer:
+            buffer.write(await file.read())
+
+        return {"message": f"File '{file.filename}' uploaded successfully to logistics."}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error uploading file: {str(e)}")
+
+
+@app.post("/api/add_wiki")
+async def add_wiki(file: UploadFile = File(...)):
+    """Upload a wiki document (PDF or text)."""
+    try:
+        # Define the upload directory
+        upload_dir = "helper/data"
+        os.makedirs(upload_dir, exist_ok=True)
+
+        # Save the uploaded file
+        file_path = os.path.join(upload_dir, file.filename)
+        with open(file_path, "wb") as buffer:
+            buffer.write(await file.read())
+
+        return {"message": f"File '{file.filename}' uploaded successfully to wiki."}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error uploading file: {str(e)}")
 
 
 @app.get("/")

@@ -21,9 +21,11 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+
 @dataclass
 class Contact:
     """Contact information from CSV"""
+
     name: str
     email: str
     role: str
@@ -32,30 +34,25 @@ class Contact:
     notes: str = ""
 
 
-
 class OutreachService:
     """Main service for handling outreach operations"""
-    
+
     def __init__(self):
         self.gemini = ChatGoogleGenerativeAI(
-            model="gemini-2.0-flash-exp",  # Using the latest model
+            model="gemini-2.5-flash",  # Using the latest model
             google_api_key=os.getenv("GOOGLE_API_KEY"),
-            temperature=0.8,  # Slightly higher creativity
-            max_output_tokens=8192,  # Ensure we get full responses
-            top_p=0.9,  # Better response quality
-            top_k=40  # More diverse responses
+            temperature=0.7,  # Slightly higher creativity
         )
-        
+
         # SMTP Configuration
         self.smtp_server = os.getenv("SMTP_SERVER", "smtp.gmail.com")
         self.smtp_port = int(os.getenv("SMTP_PORT", "587"))
-    
+
     def update_smtp_credentials(self, username: str, password: str, from_email: str):
         """Update SMTP credentials dynamically"""
         self.smtp_username = username
         self.smtp_password = password
         self.from_email = from_email
-        
 
     def process_csv(self, csv_content: str) -> List[Contact]:
         """Process uploaded CSV content and return structured contacts"""
@@ -63,66 +60,71 @@ class OutreachService:
             # Clean the CSV content and create a StringIO object for pandas
             csv_content = csv_content.strip()
             csv_io = StringIO(csv_content)
-            
+
             # Parse CSV content using StringIO
             df = pd.read_csv(csv_io)
-            
+
             contacts = []
             for _, row in df.iterrows():
                 contact = Contact(
-                    name=str(row.get('name', '')),
-                    email=str(row.get('email', '')),
-                    role=str(row.get('role', '')),
-                    company=str(row.get('company', '')),
-                    phone=str(row.get('phone', '')),
-                    notes=str(row.get('notes', ''))
+                    name=str(row.get("name", "")),
+                    email=str(row.get("email", "")),
+                    role=str(row.get("role", "")),
+                    company=str(row.get("company", "")),
+                    phone=str(row.get("phone", "")),
+                    notes=str(row.get("notes", "")),
                 )
                 contacts.append(contact)
-            
+
             return contacts
         except Exception as e:
             raise ValueError(f"Error processing CSV: {str(e)}")
-    
+
     def classify_contact(self, contact: Contact) -> str:
         """Classify contact based on role and company information"""
         role_lower = contact.role.lower()
         company_lower = contact.company.lower()
-        
+
         # Simple classification logic
-        if any(word in role_lower for word in ['judge', 'mentor', 'alumni', 'past employee']):
+        if any(
+            word in role_lower
+            for word in ["judge", "mentor", "alumni", "past employee"]
+        ):
             return "judge"
-        elif any(word in role_lower for word in ['sponsor', 'partner', 'corporate']):
+        elif any(word in role_lower for word in ["sponsor", "partner", "corporate"]):
             return "sponsor"
         else:
             return "participant"
-    
-    def generate_personalized_email(self, contact: Contact, contact_type: str) -> Dict[str, str]:
+
+    def generate_personalized_email(
+        self, contact: Contact, contact_type: str
+    ) -> Dict[str, str]:
         """Generate complete personalized email using Gemini AI"""
-        
+
         # Create dynamic context based on contact type
         context_prompts = {
             "participant": {
                 "tone": "enthusiastic and welcoming",
                 "focus": "highlighting the exciting opportunities, learning potential, and networking benefits",
                 "call_to_action": "encourage them to register and share their interests",
-                "benefits": "access to mentors, workshops, prizes, and career opportunities"
+                "benefits": "access to mentors, workshops, prizes, and career opportunities",
             },
             "judge": {
                 "tone": "respectful and appreciative",
                 "focus": "emphasizing their expertise, the impact they can have, and recognition",
                 "call_to_action": "invite them to share their judging preferences and availability",
-                "benefits": "recognition, networking with industry leaders, and contributing to student success"
+                "benefits": "recognition, networking with industry leaders, and contributing to student success",
             },
             "sponsor": {
                 "tone": "professional and strategic",
                 "focus": "highlighting ROI, brand visibility, and talent acquisition opportunities",
                 "call_to_action": "propose a call to discuss partnership details and sponsorship tiers",
-                "benefits": "brand exposure, access to top talent, and community impact"
-            }
+                "benefits": "brand exposure, access to top talent, and community impact",
+            },
         }
-        
+
         context = context_prompts.get(contact_type, context_prompts["participant"])
-        
+
         prompt_template = ChatPromptTemplate.from_template("""
         You are an expert email copywriter specializing in hackathon outreach campaigns. 
         Your goal is to create highly personalized, compelling emails that feel like they were written specifically for each recipient.
@@ -223,22 +225,24 @@ class OutreachService:
         
         The email should feel like it was written specifically for {name} at {company} after extensive research, with their notes being the central focus of personalization.
         """)
-        
+
         chain = prompt_template | self.gemini | StrOutputParser()
-        
+
         try:
-            response = chain.invoke({
-                "name": contact.name,
-                "role": contact.role,
-                "company": contact.company,
-                "contact_type": contact_type,
-                "notes": contact.notes,
-                "tone": context["tone"],
-                "focus": context["focus"],
-                "call_to_action": context["call_to_action"],
-                "benefits": context["benefits"]
-            })
-            
+            response = chain.invoke(
+                {
+                    "name": contact.name,
+                    "role": contact.role,
+                    "company": contact.company,
+                    "contact_type": contact_type,
+                    "notes": contact.notes,
+                    "tone": context["tone"],
+                    "focus": context["focus"],
+                    "call_to_action": context["call_to_action"],
+                    "benefits": context["benefits"],
+                }
+            )
+
             # Debug logging
             print(f"\n=== AI Response for {contact.name} ===")
             print(f"Raw response length: {len(response)} characters")
@@ -248,51 +252,59 @@ class OutreachService:
             print(f"Response contains '{{': {'{' in response}")
             print(f"Response contains '}}': {'}' in response}")
             print("=" * 50)
-            
+
             # Clean the response and try to parse JSON
             import json
             import re
-            
+
             # Clean the response - remove markdown formatting if present
             cleaned_response = response.strip()
-            cleaned_response = re.sub(r'```json\s*', '', cleaned_response)
-            cleaned_response = re.sub(r'\s*```', '', cleaned_response)
-            
+            cleaned_response = re.sub(r"```json\s*", "", cleaned_response)
+            cleaned_response = re.sub(r"\s*```", "", cleaned_response)
+
             print(f"Cleaned response: {cleaned_response[:200]}...")
-            
+
             try:
                 email_data = json.loads(cleaned_response)
-                print(f"JSON parsed successfully! Subject: {email_data.get('subject', 'N/A')}")
+                print(
+                    f"JSON parsed successfully! Subject: {email_data.get('subject', 'N/A')}"
+                )
                 print(f"Body word count: {len(email_data.get('body', '').split())}")
-                
+
                 # Validate the response has required fields
                 if "subject" in email_data and "body" in email_data:
                     # Ensure the body is long enough (at least 200 words)
                     body_word_count = len(email_data["body"].split())
                     if body_word_count < 200:
-                        print(f"Email too short ({body_word_count} words), regenerating...")
+                        print(
+                            f"Email too short ({body_word_count} words), regenerating..."
+                        )
                         # If too short, regenerate with a more specific prompt
-                        return self._regenerate_longer_email(contact, contact_type, context)
-                    
+                        return self._regenerate_longer_email(
+                            contact, contact_type, context
+                        )
+
                     return {
                         "subject": email_data["subject"],
-                        "body": email_data["body"]
+                        "body": email_data["body"],
                     }
                 else:
                     print("Missing required fields in AI response")
                     raise ValueError("Missing required fields in AI response")
-                    
+
             except json.JSONDecodeError as json_error:
                 print(f"JSON parsing failed: {json_error}")
                 # If JSON parsing fails, try to extract content manually
                 return self._extract_email_from_text(response, contact, contact_type)
-                
+
         except Exception as e:
             print(f"Error generating email for {contact.name}: {str(e)}")
             # Fallback to a more detailed generic email
             return self._generate_fallback_email(contact, contact_type, context)
-    
-    def _regenerate_longer_email(self, contact: Contact, contact_type: str, context: Dict) -> Dict[str, str]:
+
+    def _regenerate_longer_email(
+        self, contact: Contact, contact_type: str, context: Dict
+    ) -> Dict[str, str]:
         """Regenerate email with more specific length requirements"""
         retry_prompt = ChatPromptTemplate.from_template("""
         The previous email was too short. Please generate a MUCH LONGER email for {name} at {company}.
@@ -307,50 +319,66 @@ class OutreachService:
         
         Return as JSON: {{"subject": "...", "body": "..."}}
         """)
-        
+
         chain = retry_prompt | self.gemini | StrOutputParser()
-        
+
         try:
-            response = chain.invoke({
-                "name": contact.name,
-                "role": contact.role,
-                "company": contact.company,
-                "notes": contact.notes
-            })
-            
+            response = chain.invoke(
+                {
+                    "name": contact.name,
+                    "role": contact.role,
+                    "company": contact.company,
+                    "notes": contact.notes,
+                }
+            )
+
             import json
+
             email_data = json.loads(response.strip())
             return {
-                "subject": email_data.get("subject", f"Personalized Invitation for {contact.name}"),
-                "body": email_data.get("body", self._generate_fallback_email(contact, contact_type, context)["body"])
+                "subject": email_data.get(
+                    "subject", f"Personalized Invitation for {contact.name}"
+                ),
+                "body": email_data.get(
+                    "body",
+                    self._generate_fallback_email(contact, contact_type, context)[
+                        "body"
+                    ],
+                ),
             }
         except:
             return self._generate_fallback_email(contact, contact_type, context)
-    
-    def _extract_email_from_text(self, response: str, contact: Contact, contact_type: str) -> Dict[str, str]:
+
+    def _extract_email_from_text(
+        self, response: str, contact: Contact, contact_type: str
+    ) -> Dict[str, str]:
         """Extract email content from non-JSON AI response"""
-        lines = response.strip().split('\n')
+        lines = response.strip().split("\n")
         subject = f"Personalized Invitation for {contact.name}"
         body = ""
-        
+
         # Look for subject and body in the response
         for line in lines:
-            if line.lower().startswith('subject:') or line.lower().startswith('"subject"'):
-                subject = line.split(':', 1)[1].strip().strip('"')
-            elif line.lower().startswith('body:') or line.lower().startswith('"body"'):
-                body = line.split(':', 1)[1].strip().strip('"')
-        
+            if line.lower().startswith("subject:") or line.lower().startswith(
+                '"subject"'
+            ):
+                subject = line.split(":", 1)[1].strip().strip('"')
+            elif line.lower().startswith("body:") or line.lower().startswith('"body"'):
+                body = line.split(":", 1)[1].strip().strip('"')
+
         # If we found a body, use it; otherwise use the full response
         if not body:
             body = response.strip()
-        
+
         # If the body is still too short, enhance it
         if len(body.split()) < 200:
             body = self._enhance_short_email(body, contact, contact_type)
-        
+
         return {"subject": subject, "body": body}
-    
-    def _enhance_short_email(self, short_body: str, contact: Contact, contact_type: str) -> str:
+
+    def _enhance_short_email(
+        self, short_body: str, contact: Contact, contact_type: str
+    ) -> str:
         """Enhance a short email with more details"""
         enhanced_parts = [
             short_body,
@@ -359,12 +387,14 @@ class OutreachService:
             "Your experience and expertise would contribute significantly to the event, ",
             "and we're excited about the potential collaboration opportunities. ",
             "The hackathon will feature workshops, networking sessions, and mentorship ",
-            "that align perfectly with your professional interests and career goals."
+            "that align perfectly with your professional interests and career goals.",
         ]
-        
+
         return "".join(enhanced_parts)
-    
-    def _generate_fallback_email(self, contact: Contact, contact_type: str, context: Dict) -> Dict[str, str]:
+
+    def _generate_fallback_email(
+        self, contact: Contact, contact_type: str, context: Dict
+    ) -> Dict[str, str]:
         """Generate a detailed fallback email when AI fails"""
         if contact_type == "participant":
             body = f"""Hi {contact.name},
@@ -387,7 +417,7 @@ Looking forward to hearing from you and hopefully welcoming you to our hackathon
 
 Best regards,
 The TechInnovate 2024 Team"""
-        
+
         elif contact_type == "judge":
             body = f"""Dear {contact.name},
 
@@ -409,7 +439,7 @@ Please let me know if you'd like to discuss this opportunity further or if you h
 
 Best regards,
 The TechInnovate 2024 Team"""
-        
+
         else:  # sponsor
             body = f"""Dear {contact.name},
 
@@ -433,58 +463,56 @@ Looking forward to hearing from you and exploring this exciting opportunity toge
 
 Best regards,
 The TechInnovate 2024 Team"""
-        
+
         return {
             "subject": f"Personalized Invitation for {contact.name} - TechInnovate 2024",
-            "body": body
+            "body": body,
         }
-    
-    def send_email(self, contact: Contact, contact_type: str, email_data: Dict[str, str]) -> Dict[str, Any]:
+
+    def send_email(
+        self, contact: Contact, contact_type: str, email_data: Dict[str, str]
+    ) -> Dict[str, Any]:
         """Send personalized email to contact"""
         try:
             if not all([self.smtp_username, self.smtp_password, self.from_email]):
                 raise ValueError("SMTP credentials not configured")
-            
+
             # Create message
             msg = MIMEMultipart()
-            msg['From'] = self.from_email
-            msg['To'] = contact.email
-            msg['Subject'] = email_data["subject"]
-            
+            msg["From"] = self.from_email
+            msg["To"] = contact.email
+            msg["Subject"] = email_data["subject"]
+
             # Use the generated body
             body = email_data["body"]
-            
-            msg.attach(MIMEText(body, 'plain'))
-            
+
+            msg.attach(MIMEText(body, "plain"))
+
             # Send email
             with smtplib.SMTP(self.smtp_server, self.smtp_port) as server:
                 server.starttls()
                 server.login(self.smtp_username, self.smtp_password)
                 server.send_message(msg)
-            
+
             return {
                 "success": True,
                 "email": contact.email,
                 "contact_type": contact_type,
-                "message": "Email sent successfully"
+                "message": "Email sent successfully",
             }
-            
+
         except Exception as e:
-            return {
-                "success": False,
-                "email": contact.email,
-                "error": str(e)
-            }
-    
+            return {"success": False, "email": contact.email, "error": str(e)}
+
     def process_outreach_campaign(self, csv_content: str) -> Dict[str, Any]:
         """Process complete outreach campaign from CSV"""
         try:
             # Process CSV
             contacts = self.process_csv(csv_content)
-            
+
             if not contacts:
                 return {"success": False, "error": "No contacts found in CSV"}
-            
+
             results = []
             summary = {
                 "total_contacts": len(contacts),
@@ -492,40 +520,34 @@ The TechInnovate 2024 Team"""
                 "judges": 0,
                 "sponsors": 0,
                 "emails_sent": 0,
-                "emails_failed": 0
+                "emails_failed": 0,
             }
-            
+
             for contact in contacts:
                 # Classify contact
                 contact_type = self.classify_contact(contact)
                 summary[contact_type + "s"] += 1
-                
+
                 # Generate complete personalized email
                 email_data = self.generate_personalized_email(contact, contact_type)
-                
+
                 # Send email
                 result = self.send_email(contact, contact_type, email_data)
-                
+
                 if result["success"]:
                     summary["emails_sent"] += 1
                 else:
                     summary["emails_failed"] += 1
-                
-                results.append({
-                    "contact": contact,
-                    "contact_type": contact_type,
-                    "result": result
-                })
-            
-            return {
-                "success": True,
-                "summary": summary,
-                "results": results
-            }
-            
+
+                results.append(
+                    {"contact": contact, "contact_type": contact_type, "result": result}
+                )
+
+            return {"success": True, "summary": summary, "results": results}
+
         except Exception as e:
             return {"success": False, "error": str(e)}
-    
+
     def test_email_generation(self, contact: Contact) -> Dict[str, str]:
         """Test email generation without sending - useful for debugging"""
         print(f"\n🧪 Testing email generation for: {contact.name}")
@@ -534,17 +556,17 @@ The TechInnovate 2024 Team"""
         print(f"Notes: {contact.notes}")
         print(f"Contact Type: {self.classify_contact(contact)}")
         print("-" * 50)
-        
+
         contact_type = self.classify_contact(contact)
         email_data = self.generate_personalized_email(contact, contact_type)
-        
+
         print(f"\n📧 Generated Email:")
         print(f"Subject: {email_data['subject']}")
         print(f"Body Length: {len(email_data['body'])} characters")
         print(f"Word Count: {len(email_data['body'].split())} words")
         print(f"Body Preview: {email_data['body'][:300]}...")
         print("=" * 50)
-        
+
         return email_data
 
     def get_sample_csv_structure(self) -> str:
