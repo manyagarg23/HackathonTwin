@@ -1,20 +1,20 @@
 import { useState } from "react";
 import {
-  BarChart3,
-  MessageSquare,
   Mail,
   MapPin,
   Calendar,
   FileText,
   TrendingUp,
-  Settings,
+  Users,
 } from "lucide-react";
 
 import OutreachTab from "../Components/OutreachTab";
-import CommunityTab from "../Components/CommunityTab";
 import EventsTab from "../Components/EventsTab";
 import PersonnelTab from "../Components/PersonnelTab";
 import AnalyticsTab from "../Components/AnalyticsTab";
+import RequestsTab from "../Components/RequestsTab";
+import TeamsTab from "../Components/TeamsTab";
+import WikiTab from "../Components/WikiTab";
 import { useNavigate } from "react-router-dom";
 
 const AdminHackPortal = () => {
@@ -23,10 +23,12 @@ const AdminHackPortal = () => {
 
   const tabs = [
     { id: "outreach", label: "Outreach", icon: <Mail className="h-4 w-4" /> },
-    { id: "community", label: "Community", icon: <MapPin className="h-4 w-4" /> },
     { id: "events", label: "Events", icon: <MapPin className="h-4 w-4" /> },
     { id: "personnel", label: "Personnel", icon: <Calendar className="h-4 w-4" /> },
     { id: "analytics", label: "Analytics", icon: <TrendingUp className="h-4 w-4" /> },
+    { id: "wiki", label: "Wiki", icon: <FileText className="h-4 w-4" /> },
+    { id: "requests", label: "Requests", icon: <Users className="h-4 w-4" /> },
+    { id: "teams", label: "Teams", icon: <Users className="h-4 w-4" /> },
   ];
 
   const renderTabButton = (tab) => (
@@ -47,7 +49,8 @@ const AdminHackPortal = () => {
       <header className="border-b bg-white p-4">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">Hackathon Admin Portal</h1>
-          <button className="px-3 py-1 bg-blue-100 text-blue-700 rounded"
+          <button
+            className="px-3 py-1 bg-blue-100 text-blue-700 rounded"
             onClick={() => navigate("/dummyhack")}
           >
             Visit Current Hackathon
@@ -63,10 +66,12 @@ const AdminHackPortal = () => {
 
         {/* Tab content */}
         {activeTab === "outreach" && <OutreachTab />}
-        {activeTab === "community" && <CommunityTab />}
         {activeTab === "events" && <EventsTab />}
         {activeTab === "personnel" && <PersonnelTab />}
         {activeTab === "analytics" && <AnalyticsTab />}
+        {activeTab === "wiki" && <WikiTab />}
+        {activeTab === "requests" && <RequestsTab />}
+        {activeTab === "teams" && <TeamsTab />}
       </div>
     </div>
   );

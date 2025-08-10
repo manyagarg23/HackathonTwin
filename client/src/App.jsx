@@ -11,17 +11,20 @@ import "./App.css"
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Homepage />} />
-        <Route path="/adminsignup" element={<AdminSignUp />} />
-        <Route path="/admindashboard" element={<AdminDashboard />} />
-        <Route path="/adminhack" element={<AdminHackPortal />} />
-        <Route path="/dummyhack" element={<HackathonPage />} />
-        <Route path="/chat" element={<ChatInterface />} />
-        <Route path="*" element={<Homepage />} />
-      </Routes>
-    </BrowserRouter>
+    <>
+     <BrowserRouter>
+       <Routes>
+         <Route path="/" element={<Homepage />} />
+         <Route path="/adminsignup" element={<AdminSignUp />} />
+         <Route path="/admindashboard" element={<AdminDashboard />} />
+         <Route path="/adminhack" element={<AdminHackPortal />} />
+         <Route path="/dummyhack" element={<HackathonPage />} />
+         <Route path="/chat" element={<ChatInterface />} />
+         <Route path="*" element={<Homepage />} />
+       </Routes>
+     </BrowserRouter>
+    </>
+
   )
 }
 

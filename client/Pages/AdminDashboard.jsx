@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import ChatInterface from "../Components/ChatInterface";
+import WikiUpload from "../Components/WikiUpload";
 
 export default function AdminDashboard() {
   const [hackathons, setHackathons] = useState([]);
@@ -14,35 +16,49 @@ export default function AdminDashboard() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-white text-black flex flex-col items-center p-8 space-y-8">
+    <div className="min-h-screen bg-gray-50 text-gray-900 flex flex-col items-center p-8 space-y-12">
       {/* Header */}
-      <h1 className="text-4xl font-bold">
-        Admin Dashboard
-      </h1>
+      <header className="text-center">
+        <h1 className="text-4xl font-bold">Admin Dashboard</h1>
+        <p className="text-gray-600 mt-2">Manage your hackathons with ease</p>
+      </header>
 
-      {/* Host Button */}
-      <button
-        onClick={() => navigate("/chat")}
-        className="px-6 py-3 border-2 border-black text-black font-semibold rounded-lg hover:bg-black hover:text-white transition"
-      >
-        Host a New Hack
-      </button>
+      {/* New Hackathon Section */}
+      <section className="w-full max-w-5xl">
+        <h2 className="text-2xl font-semibold mb-6">Host a New Hackathon</h2>
+        <div className="grid gap-8 md:grid-cols-2">
+          {/* Chat Section */}
+          <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
+            <h3 className="font-medium text-lg mb-2">Chat with our AI Assistant</h3>
+            <p className="text-sm text-gray-500 mb-4">
+              Tell our chatbot your requirements and let it set up the basics for your hackathon.
+            </p>
+            <ChatInterface />
+          </div>
+
+          {/* Wiki Upload Section */}
+          <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
+            <h3 className="font-medium text-lg mb-2">Upload Wiki Document</h3>
+            <p className="text-sm text-gray-500 mb-4">
+              Prefer to prepare offline? Upload a document with your logistics.
+            </p>
+            <WikiUpload />
+          </div>
+        </div>
+      </section>
 
       {/* Past Hackathons */}
-      <div className="w-full max-w-2xl border border-black rounded-lg p-6 shadow-lg bg-white">
-        <h2 className="text-2xl font-bold mb-6 border-b border-gray-300 pb-2">
-          Past Hackathons
-        </h2>
-
+      <section className="w-full max-w-5xl">
+        <h2 className="text-2xl font-semibold mb-6">Past Hackathons</h2>
         {hackathons.length > 0 ? (
-          <ul className="space-y-4">
+          <div className="grid gap-6 md:grid-cols-2">
             {hackathons.map((hack) => (
-              <li
+              <div
                 key={hack.id}
-                className="p-4 border border-gray-300 rounded-lg hover:shadow-md transition"
+                className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm hover:shadow-md transition"
               >
                 <div className="font-bold text-lg">{hack.name}</div>
-                <div className="text-sm text-gray-600">
+                <div className="text-sm text-gray-600 mt-1">
                   {hack.date} • {hack.location}
                 </div>
                 {hack.url && (
@@ -50,28 +66,26 @@ export default function AdminDashboard() {
                     href={hack.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-sm text-gray-500 hover:underline"
+                    className="text-sm text-blue-600 hover:underline mt-2 block"
                   >
                     {hack.url}
                   </a>
                 )}
-              </li>
+              </div>
             ))}
-          </ul>
+          </div>
         ) : (
-          <p className="text-gray-500 text-sm">
-            No hackathons have been created yet.
-          </p>
+          <p className="text-gray-500 text-sm">No hackathons have been created yet.</p>
         )}
-      </div>
+      </section>
 
-            <button
-       onClick={() => navigate("/adminhack")}
-        className="px-6 py-3 border-2 border-black text-black font-semibold rounded-lg hover:bg-black hover:text-white transition"
+      {/* Visit Current Hackathon */}
+      <button
+        onClick={() => navigate("/adminhack")}
+        className="px-8 py-4 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 transition"
       >
         Visit Current Hackathon
       </button>
-
     </div>
   );
 }
