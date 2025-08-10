@@ -1,4 +1,27 @@
 import React, { useEffect, useRef, useState } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+
+// Local error boundary to prevent the entire screen from crashing on bad markdown
+class MarkdownBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error) {
+    // No-op; could log to monitoring here
+  }
+  render() {
+    if (this.state.hasError) {
+      const fallbackText = typeof this.props.fallback === "string" ? this.props.fallback : String(this.props.fallback ?? "");
+      return <span className="whitespace-pre-wrap">{fallbackText}</span>;
+    }
+    return this.props.children;
+  }
+}
 
 function WikiTab() {
   const [files, setFiles] = useState([]);
@@ -240,7 +263,25 @@ function WikiTab() {
                   }
                 >
                   <span className="block font-medium mb-1">{m.role === "user" ? "You" : "Assistant"}</span>
-                  <span className="whitespace-pre-wrap">{m.text}</span>
+                  <MarkdownBoundary fallback={m.text}>
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm]}
+                      className="whitespace-pre-wrap break-words text-sm"
+                      linkTarget="_blank"
+                      components={{
+                        strong: ({ children }) => <strong style={{ fontWeight: 'bold' }}>{children}</strong>,
+                        b: ({ children }) => <b style={{ fontWeight: 'bold' }}>{children}</b>,
+                        em: ({ children }) => <em style={{ fontStyle: 'italic' }}>{children}</em>,
+                        i: ({ children }) => <i style={{ fontStyle: 'italic' }}>{children}</i>,
+                        p: ({ children }) => <p className="mb-2">{children}</p>,
+                        ul: ({ children }) => <ul className="list-disc list-inside mb-2">{children}</ul>,
+                        ol: ({ children }) => <ol className="list-decimal list-inside mb-2">{children}</ol>,
+                        li: ({ children }) => <li className="mb-1">{children}</li>,
+                      }}
+                    >
+                      {typeof m.text === "string" ? m.text : String(m.text ?? "")}
+                    </ReactMarkdown>
+                  </MarkdownBoundary>
                 </div>
               ))
             )}
