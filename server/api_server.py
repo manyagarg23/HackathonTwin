@@ -6,6 +6,7 @@ import uuid
 from typing import Dict
 import os
 from fastapi import FastAPI, HTTPException, UploadFile, File
+from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from dotenv import load_dotenv
@@ -272,6 +273,31 @@ async def rag_chat_endpoint(chat_message: ChatMessage):
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing RAG chat: {str(e)}")
+
+
+@app.get("/api/get_wiki")
+async def get_wiki():
+    """Return the first PDF wiki document found."""
+    try:
+        data_dir = "helper/data"
+        if not os.path.exists(data_dir):
+            raise HTTPException(status_code=404, detail="Data directory not found.")
+
+        for filename in os.listdir(data_dir):
+            if filename.lower().endswith(".pdf"):
+                file_path = os.path.join(data_dir, filename)
+                return FileResponse(
+                    file_path,
+                    media_type="application/pdf",
+                    filename=filename,
+                )
+
+        raise HTTPException(status_code=404, detail="No wiki PDF found.")
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Error retrieving wiki: {str(e)}"
+        )
 
 
 @app.get("/")
