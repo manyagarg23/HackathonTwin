@@ -4,10 +4,11 @@ FastAPI server for the Hackathon Chat Agent.
 
 import uuid
 from typing import Dict
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from hackathon_agent import HackathonChatAgent
+from outreach_service import OutreachService
 
 app = FastAPI(title="Hackathon Chat API", version="1.0.0")
 
@@ -23,6 +24,8 @@ app.add_middleware(
 # Store chat sessions in memory (in production, use a proper database)
 chat_sessions: Dict[str, HackathonChatAgent] = {}
 
+# Initialize outreach service
+outreach_service = OutreachService()
 
 class ChatMessage(BaseModel):
     """Chat message model."""
@@ -34,6 +37,25 @@ class ChatResponse(BaseModel):
     """Chat response model."""
     response: str
     session_id: str
+
+
+class OutreachResponse(BaseModel):
+    """Outreach campaign response model."""
+    success: bool
+    summary: Dict = None
+    results: list = None
+    error: str = None
+
+class SMTPConfigRequest(BaseModel):
+    """SMTP configuration request model."""
+    email: str
+    password: str
+
+class SMTPConfigResponse(BaseModel):
+    """SMTP configuration response model."""
+    success: bool
+    message: str = None
+    error: str = None
 
 
 @app.post("/api/chat", response_model=ChatResponse)
@@ -96,6 +118,58 @@ async def get_summary(session_id: str):
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error getting summary: {str(e)}")
+
+
+@app.post("/api/outreach/upload-csv", response_model=OutreachResponse)
+async def upload_csv(file: UploadFile = File(...)):
+    """Upload and process CSV file for outreach campaign."""
+    try:
+        if not file.filename.endswith('.csv'):
+            raise HTTPException(status_code=400, detail="File must be a CSV")
+        
+        # Read CSV content
+        csv_content = await file.read()
+        csv_text = csv_content.decode('utf-8')
+        
+        # Process outreach campaign
+        result = outreach_service.process_outreach_campaign(csv_text)
+        
+        return OutreachResponse(**result)
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error processing CSV: {str(e)}")
+
+
+@app.get("/api/outreach/sample-csv")
+async def get_sample_csv():
+    """Get sample CSV structure for users."""
+    try:
+        sample_csv = outreach_service.get_sample_csv_structure()
+        return {"sample_csv": sample_csv}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error getting sample CSV: {str(e)}")
+
+@app.post("/api/outreach/configure-smtp", response_model=SMTPConfigResponse)
+async def configure_smtp(config: SMTPConfigRequest):
+    """Configure SMTP credentials for the outreach service."""
+    try:
+        # Update the outreach service with new SMTP credentials
+        outreach_service.update_smtp_credentials(
+            username=config.email,
+            password=config.password,
+            from_email=config.email
+        )
+        
+        return SMTPConfigResponse(
+            success=True,
+            message="SMTP credentials configured successfully"
+        )
+        
+    except Exception as e:
+        return SMTPConfigResponse(
+            success=False,
+            error=f"Failed to configure SMTP: {str(e)}"
+        )
 
 
 @app.get("/")
