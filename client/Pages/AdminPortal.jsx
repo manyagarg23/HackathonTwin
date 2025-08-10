@@ -10,27 +10,21 @@ import {
   Settings,
 } from "lucide-react";
 
-import DashboardTab from "../Components/DashboardTab";
-import ChatInterface from "../Components/ChatInterface";
 import OutreachTab from "../Components/OutreachTab";
+import CommunityTab from "../Components/CommunityTab";
 import EventsTab from "../Components/EventsTab";
-import SchedulingTab from "../Components/SchedulingTab";
-import SubmissionsTab from "../Components/SubmissionsTab";
+import PersonnelTab from "../Components/PersonnelTab";
 import AnalyticsTab from "../Components/AnalyticsTab";
-import SettingsTab from "../Components/SettingsTab";
 
 const AdminPortal = () => {
-  const [activeTab, setActiveTab] = useState("dashboard");
+  const [activeTab, setActiveTab] = useState("analytics");
 
   const tabs = [
-    { id: "dashboard", label: "Dashboard", icon: <BarChart3 className="h-4 w-4" /> },
-    { id: "chatbot", label: "Chatbot", icon: <MessageSquare className="h-4 w-4" /> },
     { id: "outreach", label: "Outreach", icon: <Mail className="h-4 w-4" /> },
+    { id: "community", label: "Community", icon: <MapPin className="h-4 w-4" /> },
     { id: "events", label: "Events", icon: <MapPin className="h-4 w-4" /> },
-    { id: "scheduling", label: "Schedule", icon: <Calendar className="h-4 w-4" /> },
-    { id: "submissions", label: "Submissions", icon: <FileText className="h-4 w-4" /> },
+    { id: "personnel", label: "Personnel", icon: <Calendar className="h-4 w-4" /> },
     { id: "analytics", label: "Analytics", icon: <TrendingUp className="h-4 w-4" /> },
-    { id: "settings", label: "Settings", icon: <Settings className="h-4 w-4" /> },
   ];
 
   const renderTabButton = (tab) => (
@@ -64,14 +58,11 @@ const AdminPortal = () => {
         </div>
 
         {/* Tab content */}
-        {activeTab === "dashboard" && <DashboardTab />}
-        {activeTab === "chatbot" && <ChatInterface />}
         {activeTab === "outreach" && <OutreachTab />}
+        {activeTab === "community" && <CommunityTab />}
         {activeTab === "events" && <EventsTab />}
-        {activeTab === "scheduling" && <SchedulingTab />}
-        {activeTab === "submissions" && <SubmissionsTab />}
+        {activeTab === "personnel" && <PersonnelTab />}
         {activeTab === "analytics" && <AnalyticsTab />}
-        {activeTab === "settings" && <SettingsTab />}
       </div>
     </div>
   );
