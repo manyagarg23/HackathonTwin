@@ -1,12 +1,14 @@
 import { useState } from 'react';
-import ChatInterface from '../Components/ChatInterface.jsx'
+import { useNavigate } from 'react-router-dom';
+import ChatInterface from '../Components/ChatInterface.jsx';
 import HeroSection from '../Components/ui/HeroSection.jsx';
 
 function Homepage() {
   const [showChat, setShowChat] = useState(false);
+  const navigate = useNavigate(); // Hook for navigation
 
   const handleGetStarted = () => {
-    setShowChat(true);
+    navigate("/adminsignup"); // Redirect to Admin Signup
   };
 
   if (showChat) {
@@ -17,9 +19,6 @@ function Homepage() {
             <h2 className="text-3xl font-bold mb-2 bg-gradient-primary bg-clip-text text-transparent">
               Hackathon Portal Generator
             </h2>
-            <p className="text-muted-foreground">
-              Tell me about your hackathon and I'll create the perfect portal for you
-            </p>
           </div>
           <ChatInterface />
           <div className="text-center mt-6">
@@ -35,19 +34,7 @@ function Homepage() {
     );
   }
 
-  // This will be shown when showChat is false
-  // return (
-  //   <div className="min-h-screen bg-background p-6 flex items-center justify-center">
-  //     <button
-  //       onClick={handleGetStarted}
-  //       className="bg-primary text-primary-foreground px-6 py-3 rounded-lg shadow-lg hover:shadow-xl"
-  //     >
-  //       Get Started
-  //     </button>
-  //   </div>
-  // );
-
   return <HeroSection onGetStarted={handleGetStarted} />;
-
 }
+
 export default Homepage;

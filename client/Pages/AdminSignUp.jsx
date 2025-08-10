@@ -1,8 +1,10 @@
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
+import { useNavigate } from "react-router-dom";
 
 const AdminSignup = () => {
   const [isLoading, setIsLoading] = useState(false);
+    const navigate = useNavigate();
 
   const {
     register,
@@ -111,6 +113,13 @@ const AdminSignup = () => {
             {isLoading ? "Creating Account..." : "Create Admin Account"}
           </button>
         </form>
+        <label>***NOTE*** To be changed later: rn, just go to next page without creating acc by clicking log in</label>
+        <button
+          onClick={() => navigate("/admindashboard")}
+          className="mt-4 text-sm text-blue-600 hover:underline"
+        >
+          Already have an account? Log in
+        </button>
       </div>
     </div>
   );

@@ -15,9 +15,11 @@ import CommunityTab from "../Components/CommunityTab";
 import EventsTab from "../Components/EventsTab";
 import PersonnelTab from "../Components/PersonnelTab";
 import AnalyticsTab from "../Components/AnalyticsTab";
+import { useNavigate } from "react-router-dom";
 
-const AdminPortal = () => {
+const AdminHackPortal = () => {
   const [activeTab, setActiveTab] = useState("analytics");
+  const navigate = useNavigate();
 
   const tabs = [
     { id: "outreach", label: "Outreach", icon: <Mail className="h-4 w-4" /> },
@@ -45,9 +47,11 @@ const AdminPortal = () => {
       <header className="border-b bg-white p-4">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">Hackathon Admin Portal</h1>
-          <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded">
-            Admin Dashboard
-          </span>
+          <button className="px-3 py-1 bg-blue-100 text-blue-700 rounded"
+            onClick={() => navigate("/dummyhack")}
+          >
+            Visit Current Hackathon
+          </button>
         </div>
       </header>
 
@@ -68,4 +72,4 @@ const AdminPortal = () => {
   );
 };
 
-export default AdminPortal;
+export default AdminHackPortal;

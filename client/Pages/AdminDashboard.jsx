@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
-// import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 export default function AdminDashboard() {
   const [hackathons, setHackathons] = useState([]);
-//   const navigate = useNavigate();
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Replace with API call
@@ -22,7 +22,7 @@ export default function AdminDashboard() {
 
       {/* Host Button */}
       <button
-        // onClick={() => navigate("/chatinterface")}
+        onClick={() => navigate("/chat")}
         className="px-6 py-3 border-2 border-black text-black font-semibold rounded-lg hover:bg-black hover:text-white transition"
       >
         Host a New Hack
@@ -64,6 +64,14 @@ export default function AdminDashboard() {
           </p>
         )}
       </div>
+
+            <button
+       onClick={() => navigate("/adminhack")}
+        className="px-6 py-3 border-2 border-black text-black font-semibold rounded-lg hover:bg-black hover:text-white transition"
+      >
+        Visit Current Hackathon
+      </button>
+
     </div>
   );
 }
